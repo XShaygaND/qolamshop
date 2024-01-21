@@ -1,0 +1,60 @@
+{% extends "products/base.html" %}
+
+{% load static %}
+
+{% block title %}
+  {{ product.name }}
+{% endblock %}
+
+{% block content %}
+  <div class="row row-cols-2 my-4">
+    <img class="border rounded" style="height: 500px; width: 500px; object-fit: cover;" src="{{ associate.logo.url }}" alt="logo" />
+    <div>
+      <div>
+        <h2>{{ associate.name }}</h2>
+        <h3><a href="" class="text-decoration-none">{{ associate.location }}</a></h3>
+        <br />
+    </div>
+    </div>
+  </div>
+  <hr />
+  <div>
+    <p>{{ associate.description }}</p>
+  </div>
+
+  {% if product_list %}
+    <div id="carouselExampleAutoplaying" class="carousel slide mb-4 border border-all" data-bs-ride="carousel"> 
+      <div class="carousel-inner">
+        {% for product in carousel %}
+          <a href="{% url 'products:details' product.pk %}" class="carousel-item active text-dark text-decoration-none">
+            <img src="{{ product.logo.url }}" style="height: 300px; width: 100%; object-fit: cover;" class="d-block" alt="..." />
+          </a>
+        {% endfor %}
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleAutoplaying" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleAutoplaying" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+    </div>
+    <div class="row row-cols-1 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 justify-content-center">
+      {% for product in product_list %}
+        <a href="{% url 'products:details' product.pk %}" class="col mb-2 text-dark text-decoration-none" style="width: 300px;">
+          <div class="shadow">
+            <img class="img-fluid" style="width: 300px; height: 300px; object-fit: cover" src="{{ product.logo.url }}" alt="Product Image" />
+            <div class="ms-2">
+              <h5>{{ product.name }}</h5>
+              <p>${{ product.price }}</p>
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <br />
+    <h3>No products available!</h3>
+  {% endif %}
+{% endblock %}

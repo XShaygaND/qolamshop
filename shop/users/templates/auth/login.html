@@ -1,0 +1,24 @@
+{% extends 'products/base.html' %}
+
+{% block title %}
+    Login
+{% endblock title %}
+
+
+{% block content %}
+
+<br>
+<h1>Login</h1>
+<hr>
+<div class="form-group">
+<form method="POST", enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-primary">Login</button>
+    <a href="{% url 'users:signup' %}" class="btn btn-success">Register</a>
+</form>
+</div>
+<br>
+<br>
+    
+{% endblock content %}

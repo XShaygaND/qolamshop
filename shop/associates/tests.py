@@ -1,0 +1,41 @@
+import tempfile
+from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+from products.models import Product
+from associates.models import Associate
+from users.models import User
+
+
+class TestAssociateModel(TestCase):
+    def setUp(self):
+        """Sets up associates for testing"""
+
+        with tempfile.NamedTemporaryFile() as f:
+            f.write(b'Test image.')
+            f.flush()
+            test_image = SimpleUploadedFile('test_image.png', f.read())
+
+        self.user = User.objects.create(email='user@test.com', password='T@st123', is_associate=True)
+
+        Associate.objects.create(
+            name='Testing co.',
+            description='Testing Co\Testing\nDescription',
+            owner = self.user,
+            logo = test_image,
+            website = 'test.com',
+            location='France',
+            slug='test-slug',
+        )
+
+    def test_associate_fields(self):
+        """Tests default fields of the Associate model"""
+
+        associate = Associate.objects.get(owner=self.user)
+
+        self.assertEqual(associate.name, 'Testing co.')
+        self.assertEqual(associate.description, 'Testing Co\Testing\nDescription')
+        self.assertEqual(associate.owner, self.user)
+        self.assertEqual(associate.website, 'test.com')
+        self.assertEqual(associate.location, 'France')
+        self.assertEqual(associate.slug, 'test-slug')
