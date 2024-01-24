@@ -9,5 +9,7 @@ class User(AbstractUser):
     purchases = models.IntegerField(default=0)
     is_associate = models.BooleanField(default=False)
 
+    cart_count = models.PositiveIntegerField(default=0)
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
