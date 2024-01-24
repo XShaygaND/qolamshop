@@ -10,6 +10,7 @@ class Product(models.Model):
     logo = models.ImageField(blank=False)
     price = models.FloatField()
     sales = models.PositiveIntegerField(default=0)
+    count = models.PositiveIntegerField(default=0)
     pub_date = models.DateTimeField(auto_now_add=True)
     category = models.CharField(max_length=99, choices=categories)
     owner = models.ForeignKey(Associate, on_delete=models.CASCADE)

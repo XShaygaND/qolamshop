@@ -9,6 +9,7 @@ User = get_user_model()
 class Associate(models.Model):
     """A simple model representing the associates of the shop"""
 
+    is_active = models.BooleanField(default=True)
     name = models.CharField(max_length=99)
     description = models.TextField(max_length=1999)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -16,6 +17,7 @@ class Associate(models.Model):
     join_date = models.DateTimeField(auto_now_add=True)
     website = models.URLField(blank=True)
     location = models.CharField(max_length=99, choices=locations, blank=False)
+    sales = models.PositiveIntegerField(default=0)
     slug = models.SlugField(blank=False)
 
     def get_absolute_url(self):
