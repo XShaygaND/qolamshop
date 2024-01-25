@@ -15,7 +15,7 @@ class UserCreateView(CreateView):
     success_url = reverse_lazy('users:login')
 
     def dispatch(self, request, *args, **kwargs):
-        """Redirects user to their profile page if they are logged in, elsewise it lets the user view the page"""
+        """Redirects user to the index page if they are logged in"""
 
         if request.user.is_anonymous:
             return super(UserCreateView, self).dispatch(request, *args, **kwargs)
@@ -25,13 +25,14 @@ class UserCreateView(CreateView):
 
 class UserLoginView(LoginView):
     """A modified view that inherits from django.contrib.auth.views.LoginView"""
+    
     form_class = UserLoginForm
     template_name = "auth/login.html"
     success_url = reverse_lazy('index')
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_anonymous:
-            """Redirects user to their profile page if they are logged in"""
+            """Redirects user to the index page if they are logged in"""
 
             return super(UserLoginView, self).dispatch(request, *args, **kwargs)
         else:
