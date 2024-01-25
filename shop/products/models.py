@@ -17,7 +17,7 @@ class Product(models.Model):
     holding = models.CharField(max_length=99, choices=holdings)
 
     def get_absolute_url(self):
-        return reverse("product", kwargs={"pk": self.pk})
+        return reverse("products:details", kwargs={"pk": self.pk})
     
     def __str__(self):
         return ' | '.join((str(self.owner), self.name, '$' + str(self.price)))

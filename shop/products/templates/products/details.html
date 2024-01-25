@@ -15,7 +15,10 @@
         <h3><a href=" {% url "associates:details" product.owner.slug %} " class="text-decoration-none">{{ product.owner }}</a></h3>
         <br />
         <h4>${{ product.price }}</h4>
-        <button class="btn btn-info text-white">Add to card</button>
+        <form action="{% url 'carts:add_to_cart' product.pk %}" method="POST">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-info text-white">Add to cart</button>
+        </form> 
     </div>
     </div>
   </div>
