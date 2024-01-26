@@ -6,7 +6,7 @@ from carts.models import CartItem
 
 @receiver(post_save, sender=CartItem)
 def update_user_card_count(sender, instance, created, **kwargs):
-    """A signal that updates the `carts.models.Cart.count` and `users.models.User.cart_count` fields for the front-end use"""
+    """A signal that updates the `carts.models.Cart.count` and `users.models.User.cart_count` post_save"""
     
     if created:
         cart = instance.cart

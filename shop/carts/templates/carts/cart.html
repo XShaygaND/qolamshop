@@ -7,28 +7,36 @@
 {% endblock %}
 
 {% block content %}
-  {% if product_list %}
-    {% for product in product_list %}
+  {% if cart_list %}
+    {% for cart in cart_list %}
       <div class="cart-item mb-3 border-bottom">
-        <img src="{{ product.logo.url }}" class="card-img-top sq-img" alt="...", style="width: 300px;">
+        <img src="{{ cart.product.logo.url }}" class="card-img-top sq-img" alt="...", style="width: 300px;">
       
         <div class="card-body d-flex justify-content-between align-items-center pb-1">
-          <h5 class="card-title mb-2">{{ product.name }}</h5>
+          <h5 class="card-title mb-2">{{ cart.product.name }}</h5>
       
           <div class="cart-details">
-            <span class="card-text">Price: ${{ product.price }}</span>
+            <span class="card-text">Price: ${{ cart.product.price }}</span>
           </div>
       
           <div class="btn-group">
-            <button class="btn btn-outline-primary">-</button>
-            <button class="btn btn-outline-danger opacity-100" disabled>1</button>
-            <button class="btn btn-outline-primary">+</button>
+            <button type="submit" form="decrease-{{ cart.product.pk }}" class="btn btn-outline-danger">-</button>
+            <form action="{% url 'carts:remove_from_cart' cart.product.pk %}" method="post" id="decrease-{{ cart.product.pk }}">
+              {% csrf_token %}
+            </form>
+          
+            <button class="btn btn-outline-primary opacity-100" disabled>{{ cart.quantity }}</button>
+          
+            <form action="{% url 'carts:add_to_cart' cart.product.pk %}" method="post" id="increase-{{ cart.product.pk }}">
+              {% csrf_token %}
+            </form>
+            <button type="submit" form="increase-{{ cart.product.pk }}" class="btn btn-outline-secondary">+</button>
           </div>
         </div>
       </div>
     {% endfor %}
   {% else %}
     <br />
-    <h3>No products available!</h3>
+    <h3>Your cart is empty!</h3>
   {% endif %}
 {% endblock %}

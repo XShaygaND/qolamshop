@@ -19,10 +19,10 @@ class CartProductListView(ListView):
 
         cart = Cart.objects.get(owner=self.request.user)
 
-        cart_product_list = [
-            cartitem.product for cartitem in CartItem.objects.filter(cart=cart)]
+        cart_item_list = [
+            cartitem for cartitem in CartItem.objects.filter(cart=cart)]
 
-        data['product_list'] = cart_product_list
+        data['cart_list'] = cart_item_list
         return data
     
     def dispatch(self, request, *args, **kwargs):
@@ -51,6 +51,12 @@ class AddToCartView(UpdateView):
             else:
                 cart_item = CartItem.objects.get(product=product, cart=cart)
                 cart_item.quantity += 1
+
+                cart.count += 1
+                cart.owner.cart_count += 1
+
+                cart.save()
+                cart.owner.save()
                 cart_item.save()
 
             return redirect('carts:cart')
@@ -62,3 +68,44 @@ class AddToCartView(UpdateView):
             return redirect(reverse('products:index'))
         else:
             return super(AddToCartView, self).dispatch(request, *args, **kwargs)
+        
+
+class RemoveFromCartView(UpdateView):
+    model = Product
+    fields = []
+
+    def post(self, request, pk):
+        """Remove the product to the user's cart using a post method"""
+
+        if request.method == 'POST':
+            product = Product.objects.get(pk=pk)
+            cart = Cart.objects.get(owner=request.user)
+
+            if not CartItem.objects.filter(product=product, cart=cart).exists():
+                return redirect('cart')
+                
+            else:
+                cart_item = CartItem.objects.get(product=product, cart=cart)
+                
+                if cart_item.quantity == 1:
+                    cart_item.delete()
+
+                else:
+                    cart_item.quantity -= 1
+                    cart_item.save()
+                
+                cart.count -= 1
+                cart.owner.cart_count -= 1
+
+                cart.save()
+                cart.owner.save()
+
+            return redirect('carts:cart')
+    
+    def dispatch(self, request, *args, **kwargs):
+        """Redirects user to the index page if the method request isn't POST"""
+
+        if request.method != 'POST':
+            return redirect(reverse('products:index'))
+        else:
+            return super(RemoveFromCartView, self).dispatch(request, *args, **kwargs)
