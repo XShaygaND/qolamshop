@@ -74,6 +74,7 @@ class TestUserModelViews(TestCase):
 
     def test_annonymous_login_get(self):
         """Tests to see if an unauthenticated user gets redirected after requesting a GET to 'users:login'"""
+        
         client = Client()
         response = client.get(reverse('users:login'))
 

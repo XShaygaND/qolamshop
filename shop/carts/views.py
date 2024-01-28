@@ -64,8 +64,12 @@ class AddToCartView(UpdateView):
     def dispatch(self, request, *args, **kwargs):
         """Redirects user to the index page if the method request isn't POST"""
 
-        if request.method != 'POST':
-            return redirect(reverse('products:index'))
+        if not request.user.is_authenticated:
+            return redirect('users:login')
+            
+        elif request.method != 'POST':
+            return redirect('products:index')
+        
         else:
             return super(AddToCartView, self).dispatch(request, *args, **kwargs)
         
@@ -75,7 +79,7 @@ class RemoveFromCartView(UpdateView):
     fields = []
 
     def post(self, request, pk):
-        """Remove the product to the user's cart using a post method"""
+        """Remove the product from the user's cart using a post method"""
 
         if request.method == 'POST':
             product = Product.objects.get(pk=pk)
@@ -105,7 +109,11 @@ class RemoveFromCartView(UpdateView):
     def dispatch(self, request, *args, **kwargs):
         """Redirects user to the index page if the method request isn't POST"""
 
-        if request.method != 'POST':
+        if not request.user.is_authenticated:
+            return redirect('users:login')
+        
+        elif request.method != 'POST':
             return redirect(reverse('products:index'))
+        
         else:
             return super(RemoveFromCartView, self).dispatch(request, *args, **kwargs)

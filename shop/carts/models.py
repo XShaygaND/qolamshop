@@ -9,7 +9,7 @@ class Cart(models.Model):
     count = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return 'Cart | ' + str(self.owner)
+        return 'Cart | ' + str(self.owner) + ' | ' + str(self.count)
 
 
 class CartItem(models.Model):

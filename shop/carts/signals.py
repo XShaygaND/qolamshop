@@ -12,8 +12,8 @@ def update_user_card_count(sender, instance, created, **kwargs):
         cart = instance.cart
         user = instance.cart.owner
 
-        cart.count += 1
-        user.cart_count += 1
+        cart.count += instance.quantity
+        user.cart_count += instance.quantity
 
         cart.save()
         user.save()
