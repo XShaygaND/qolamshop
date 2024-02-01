@@ -2,13 +2,14 @@ from typing import Any
 from django.db.models.base import Model as Model
 from django.db.models.query import QuerySet
 from django.http.response import HttpResponse as HttpResponse
-from django.views.generic import ListView, UpdateView, CreateView
+from django.views.generic import ListView, UpdateView, CreateView, DetailView
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 
 
 from carts.models import Cart, CartItem, Order
 from carts.forms import OrderCreateForm
+from carts.datasets import order_statuses
 from products.models import Product
 
 
@@ -25,7 +26,8 @@ class CartProductListView(ListView):
         cart_item_list = [
             cartitem for cartitem in CartItem.objects.filter(cart=cart)]
 
-        data['cart_list'] = cart_item_list
+        data['cartitem_list'] = cart_item_list
+
         return data
     
     def dispatch(self, request, *args, **kwargs):
@@ -124,7 +126,7 @@ class RemoveFromCartView(UpdateView):
 
 class OrderView(CreateView):
     model = Order
-    template_name = 'carts/order.html'
+    template_name = 'carts/checkout.html'
     form_class = OrderCreateForm
     success_url = reverse_lazy('products:index') # Change to orders
 
@@ -140,13 +142,75 @@ class OrderView(CreateView):
     def dispatch(self, request, *args, **kwargs):
         """Redirects user to the index page if the method request isn't POST"""
 
-
         if not request.user.is_authenticated:
             return redirect('users:login')
         
-        elif not Cart.objects.get(owner=self.request.user, is_active=True).count > 0:
-            
+        elif not CartItem.objects.filter(cart=Cart.objects.get(owner=self.request.user, is_active=True)).exists():
             return redirect('carts:cart')
         
         else:
             return super(OrderView, self).dispatch(request, *args, **kwargs)
+        
+
+class OrderListView(ListView):
+    model = Order
+    template_name = 'carts/order_list.html'
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+
+        carts = Cart.objects.filter(owner=self.request.user, is_active=False)
+
+        orders = [Order.objects.get(cart=cart) for cart in carts]
+
+        for order in orders:
+            order.status = self.remap_order_status(order.status)
+
+        data['order_list'] = orders
+
+        return data
+    
+    def remap_order_status(self, status: str):
+        for short_stats, long_stats in order_statuses:
+            if status == short_stats:
+                return long_stats
+            
+        raise ValueError("'status' not in order_statuses!")
+    
+    def dispatch(self, request, *args, **kwargs):
+        """Redirects user to the index page if the user isnt authenticated"""
+
+        if not request.user.is_authenticated:
+            return redirect('users:login')
+        
+        else:
+            return super(OrderListView, self).dispatch(request, *args, **kwargs)
+
+
+class OrderDetailView(DetailView):
+    model = Order
+    template_name = 'carts/order_details.html'
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+
+        cart = self.get_object().cart
+
+        cart_item_list = [
+            cartitem for cartitem in CartItem.objects.filter(cart=cart)]
+
+        data['cartitem_list'] = cart_item_list
+
+        return data
+    
+    def dispatch(self, request, *args, **kwargs):
+        """Redirects user to the index page if the user isnt authenticated"""
+
+        if not request.user.is_authenticated:
+            return redirect('users:login')
+        
+        elif self.get_object().cart.owner != request.user:
+            return redirect('carts:orders')
+        
+        else:
+            return super(OrderDetailView, self).dispatch(request, *args, **kwargs)
