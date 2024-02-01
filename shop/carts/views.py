@@ -140,12 +140,12 @@ class OrderView(CreateView):
     def dispatch(self, request, *args, **kwargs):
         """Redirects user to the index page if the method request isn't POST"""
 
-        cart = Cart.objects.get(owner=self.request.user, is_active=True)
 
         if not request.user.is_authenticated:
             return redirect('users:login')
         
-        elif not cart.count > 0:
+        elif not Cart.objects.get(owner=self.request.user, is_active=True).count > 0:
+            
             return redirect('carts:cart')
         
         else:

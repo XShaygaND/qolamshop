@@ -11,7 +11,7 @@ class Cart(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return 'Cart | ' + str(self.owner) + ' | ' + str(self.count)
+        return ' | '.join(('Cart', str(self.owner), str(self.count), str(self.is_active)))
 
 
 class CartItem(models.Model):
@@ -28,7 +28,7 @@ class Order(models.Model):
     address = models.TextField(max_length=199, blank=True)
     phone = models.CharField(max_length=15, blank=True)
     postal_code = models.CharField(max_length=20, blank=True)
-    delivery_method = models.CharField(max_length=99, choices=delivery_methods, default="Normal delivery")
+    delivery_method = models.CharField(max_length=99, choices=delivery_methods, default="ND")
     status = models.CharField(max_length=99, choices=order_statuses, default='CRT')
 
     def __str__(self):

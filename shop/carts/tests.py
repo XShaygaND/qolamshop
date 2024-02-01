@@ -1,11 +1,10 @@
 import tempfile
 from django.test import TestCase, Client
 from django.urls import reverse
-from django.db import transaction
 from django.contrib.auth.models import AnonymousUser
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from carts.models import Cart, CartItem
+from carts.models import Cart, CartItem, Order
 from associates.models import Associate
 from users.models import User
 from products.models import Product
@@ -230,3 +229,117 @@ class TestCartItemModel(TestCase):
         cartitem.delete()
 
         #TODO: Check multiple products
+    
+
+class TestOrderModel(TestCase):
+    """Test class for testing carts.models.Order"""
+
+    def setUp(self):
+        self.user = User.objects.create(email='user@test.com', password='T@st123', is_associate=True)
+        
+        with tempfile.NamedTemporaryFile() as f:
+            f.write(b'Test image.')
+            f.flush()
+            test_image = SimpleUploadedFile('test_image.png', f.read())
+        
+        self.associate = Associate.objects.create(
+            name='Testing co.',
+            description='Testing Co\Testing\nDescription',
+            owner = self.user,
+            logo = test_image,
+            website = 'test.com',
+            location='France',
+            slug='test-slug',
+        )
+
+        self.product = Product.objects.create(
+            name='TestProduct',
+            description='Test\nProduct\nDescription',
+            logo=test_image,
+            price='99.99',
+            category='food',
+            owner=self.associate,
+            holding='San Francisco',
+        )
+
+    def tearDown(self):
+        """Deletes the objects used for testing""" 
+
+        self.user.delete()
+        self.associate.delete()
+        self.product.delete()
+
+    def test_order_fields(self):
+        """Tests default fields of the `Order` model"""
+
+        cart = Cart.objects.get(owner=self.user)
+        order = Order.objects.create(cart=cart)
+
+        self.assertEqual(order.cart, cart)
+        self.assertEqual(order.address, '')
+        self.assertEqual(order.phone, '')
+        self.assertEqual(order.postal_code, '')
+        self.assertEqual(order.delivery_method, 'ND')
+        self.assertEqual(order.status, 'CFD')
+
+    def test_order_cart_management(self):
+        """Tests the handling of the `Cart` model upon saving of the `Order` model"""
+        
+        cart = Cart.objects.get(owner=self.user)
+        user = User.objects.get(email='user@test.com')
+        Order.objects.create(cart=cart)
+        CartItem.objects.create(cart=cart, product=self.product, quantity=2)
+
+        self.assertEqual(cart.is_active, False)
+        self.assertEqual(cart.count, 2)
+        self.assertEqual(user.cart_count, 0)
+        self.assertEqual(Cart.objects.filter(owner=self.user, is_active=True).exists(), True)
+        self.assertEqual(Cart.objects.filter(owner=self.user, is_active=True).count(), 1)
+        self.assertEqual(Cart.objects.get(owner=self.user, is_active=True).count, 0)
+
+    def test_user_order_view(self):
+        """Tests a get request to the checkout page by a user"""
+        
+        client = Client()
+        client.force_login(self.user)
+
+        cart = Cart.objects.get(owner=self.user)
+
+        CartItem.objects.create(cart=cart, product=self.product, quantity=2)
+
+        response = client.get(reverse('carts:checkout'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(cart.count, 2)
+        self.assertEqual(cart.is_active, True)
+    
+    def test_annonymous_order_view(self):
+        """Tests a get request to the checkout page by an annonymous"""
+
+        client = Client()
+
+        cart = Cart.objects.get(owner=self.user)
+
+        CartItem.objects.create(cart=cart, product=self.product, quantity=2)
+
+        response = client.get(reverse('carts:checkout'), follow=True)
+
+        self.assertEqual(response.redirect_chain[0], ('/login/', 302))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(cart.count, 2)
+        self.assertEqual(cart.is_active, True)
+
+    def test_user_empty_cart_order_view(self):
+        """Tests a get request to the checkout page by a user with an empty cart"""
+
+        client = Client()
+        client.force_login(self.user)
+
+        cart = Cart.objects.get(owner=self.user)
+
+        response = client.get(reverse('carts:checkout'), follow=True)
+
+        self.assertEqual(response.redirect_chain[0], ('/cart/', 302))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(cart.count, 0)
+        self.assertEqual(cart.is_active, True)
