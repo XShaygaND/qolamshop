@@ -1,11 +1,14 @@
 from typing import Any
-from django.http import HttpRequest
+from django.db.models.base import Model as Model
+from django.db.models.query import QuerySet
 from django.http.response import HttpResponse as HttpResponse
-from django.views.generic import ListView, UpdateView
+from django.views.generic import ListView, UpdateView, CreateView
 from django.shortcuts import redirect
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 
-from carts.models import Cart, CartItem
+
+from carts.models import Cart, CartItem, Order
+from carts.forms import OrderCreateForm
 from products.models import Product
 
 
@@ -17,7 +20,7 @@ class CartProductListView(ListView):
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
 
-        cart = Cart.objects.get(owner=self.request.user)
+        cart = Cart.objects.get(owner=self.request.user, is_active=True)
 
         cart_item_list = [
             cartitem for cartitem in CartItem.objects.filter(cart=cart)]
@@ -43,7 +46,7 @@ class AddToCartView(UpdateView):
 
         if request.method == 'POST':
             product = Product.objects.get(pk=pk)
-            cart = Cart.objects.get(owner=request.user)
+            cart = Cart.objects.get(owner=request.user, is_active=True)
 
             if not CartItem.objects.filter(product=product, cart=cart).exists():
                 CartItem.objects.create(cart=cart, product=product, quantity=1)
@@ -83,7 +86,7 @@ class RemoveFromCartView(UpdateView):
 
         if request.method == 'POST':
             product = Product.objects.get(pk=pk)
-            cart = Cart.objects.get(owner=request.user)
+            cart = Cart.objects.get(owner=request.user, is_active=True)
 
             if not CartItem.objects.filter(product=product, cart=cart).exists():
                 return redirect('cart')
@@ -117,3 +120,33 @@ class RemoveFromCartView(UpdateView):
         
         else:
             return super(RemoveFromCartView, self).dispatch(request, *args, **kwargs)
+
+
+class OrderView(CreateView):
+    model = Order
+    template_name = 'carts/order.html'
+    form_class = OrderCreateForm
+    success_url = reverse_lazy('products:index') # Change to orders
+
+    def form_valid(self, form):
+        cart = Cart.objects.get(owner=self.request.user, is_active=True)
+
+        self.object = form.save(commit=False)
+        self.object.cart = cart
+        self.object.save()
+
+        return redirect(self.get_success_url())
+
+    def dispatch(self, request, *args, **kwargs):
+        """Redirects user to the index page if the method request isn't POST"""
+
+        cart = Cart.objects.get(owner=self.request.user, is_active=True)
+
+        if not request.user.is_authenticated:
+            return redirect('users:login')
+        
+        elif not cart.count > 0:
+            return redirect('carts:cart')
+        
+        else:
+            return super(OrderView, self).dispatch(request, *args, **kwargs)

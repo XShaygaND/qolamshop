@@ -15,9 +15,41 @@ class TestCartModel(TestCase):
     """Test class for testing carts.models.Cart"""
 
     def setUp(self):
-        """Sets up carts for testing"""
+        """Sets up cart for testing"""
 
         self.user = User.objects.create(email='user@test.com', password='T@st123', is_associate=True)
+        
+        with tempfile.NamedTemporaryFile() as f:
+            f.write(b'Test image.')
+            f.flush()
+            test_image = SimpleUploadedFile('test_image.png', f.read())
+        
+        self.associate = Associate.objects.create(
+            name='Testing co.',
+            description='Testing Co\Testing\nDescription',
+            owner = self.user,
+            logo = test_image,
+            website = 'test.com',
+            location='France',
+            slug='test-slug',
+        )
+
+        self.product = Product.objects.create(
+            name='TestProduct',
+            description='Test\nProduct\nDescription',
+            logo=test_image,
+            price='99.99',
+            category='food',
+            owner=self.associate,
+            holding='San Francisco',
+        )
+
+    def tearDown(self):
+        """Deletes the models used for testing"""
+
+        self.user.delete()
+        self.associate.delete()
+        self.product.delete()
 
     def test_cart_fields(self):
         """Tests default fields of the Cart model"""
@@ -25,6 +57,7 @@ class TestCartModel(TestCase):
 
         self.assertEqual(cart.owner, self.user)
         self.assertEqual(cart.count, 0)
+        self.assertEqual(cart.is_active, True)
 
 
 class TestCartItemModel(TestCase):

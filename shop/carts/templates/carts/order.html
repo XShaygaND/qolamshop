@@ -1,0 +1,23 @@
+{% extends 'products/base.html' %}
+
+{% block title %}
+    Order
+{% endblock title %}
+
+
+{% block content %}
+
+<br>
+<h1>Order</h1>
+<hr>
+<div class="form-group">
+<form method="POST", enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-primary">Submit</button>
+</form>
+</div>
+<br>
+<br>
+    
+{% endblock content %}

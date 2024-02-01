@@ -28,6 +28,7 @@ class ProductDetailView(DetailView):
 
 class ProductCategoryListView(ListView):
     """Basic ListView for categories of the shop"""
+    
     model = Product
     template_name = 'products/category.html'
 

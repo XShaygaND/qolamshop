@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+
 from products.datasets import categories, holdings
 from associates.models import Associate
 
