@@ -298,7 +298,7 @@ class TestOrderModel(TestCase):
         self.assertEqual(Cart.objects.get(owner=self.user, is_active=True).count, 0)
 
     def test_user_order_view(self):
-        """Tests a get request to the checkout page by a user"""
+        """Tests a get request to the checkout view by a user"""
         
         client = Client()
         client.force_login(self.user)
@@ -314,7 +314,7 @@ class TestOrderModel(TestCase):
         self.assertEqual(cart.is_active, True)
     
     def test_annonymous_order_view(self):
-        """Tests a get request to the checkout page by an annonymous"""
+        """Tests a get request to the checkout view by an annonymous"""
 
         client = Client()
 
@@ -330,7 +330,7 @@ class TestOrderModel(TestCase):
         self.assertEqual(cart.is_active, True)
 
     def test_user_empty_cart_order_view(self):
-        """Tests a get request to the checkout page by a user with an empty cart"""
+        """Tests a get request to the checkout view by a user with an empty cart"""
 
         client = Client()
         client.force_login(self.user)
@@ -343,3 +343,85 @@ class TestOrderModel(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(cart.count, 0)
         self.assertEqual(cart.is_active, True)
+    
+    def test_user_orders_list_view(self):
+        """Tests a get request to the orders view by a user"""
+
+        client = Client()
+        client.force_login(self.user)
+
+        cart = Cart.objects.get(owner=self.user)
+
+        CartItem.objects.create(cart=cart, product=self.product)
+
+        response = client.get(reverse('carts:orders'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(cart.count, 1)
+        
+    def test_user_empty_cart_orders_list_view(self):
+        """Tests a get request to the orders view by a user with an empty cart"""
+
+        client = Client()
+        client.force_login(self.user)
+
+        cart = Cart.objects.get(owner=self.user)
+
+        response = client.get(reverse('carts:orders'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(cart.count, 0)
+
+    def test_annonymous_orders_list_view(self):
+        """Tests a get request to the orders view by an annonymous"""
+        
+        client = Client()
+
+        response = client.get(reverse('carts:orders'), follow=True)
+
+        self.assertEqual(response.redirect_chain[0], ('/login/', 302))
+        self.assertEqual(response.status_code, 200)
+
+    def test_user_order_details_view(self):
+        """Tests a get request to the order details view by a user"""
+
+        client = Client()
+        client.force_login(self.user)
+
+        cart = Cart.objects.get(owner=self.user)
+        
+        order = Order.objects.create(cart=cart)
+
+        response = client.get(reverse('carts:order_details', args=[order.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        
+    def test_wrong_user_order_details_view(self):
+        """Tests a get request to the order details view by a user unassociated with the order"""
+
+        _user = User.objects.create(email='seconduser@test.com', password='T@st123', is_associate=True)
+        
+        client = Client()
+        client.force_login(_user)
+
+        cart = Cart.objects.get(owner=self.user)
+
+        order = Order.objects.create(cart=cart)
+
+        response = client.get(reverse('carts:order_details', args=[order.pk]), follow=True)
+
+        self.assertEqual(response.redirect_chain[0], ('/orders/', 302))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(cart.count, 0)
+
+    def test_annonymous_order_details_view(self):
+        """Tests a get request to the order details view by an annonymous"""
+        
+        client = Client()
+
+        response = client.get(reverse('carts:orders'), follow=True)
+
+        self.assertEqual(response.redirect_chain[0], ('/login/', 302))
+        self.assertEqual(response.status_code, 200)
+
+    #TODO: Test redirect if the object doesnt exist
