@@ -11,7 +11,7 @@ class CartAdmin(admin.ModelAdmin):
         'count',
         'is_active'
         )
-    
+
     list_filter = ('is_active',)
     search_fields = ('owner__email',)
     readonly_fields = ('count', 'is_active')
@@ -25,7 +25,7 @@ class CartItemAdmin(admin.ModelAdmin):
         'product',
         'quantity'
         )
-    
+
     list_filter = ('cart__is_active',)
     search_fields = ('cart__owner__email',)
 
@@ -38,6 +38,6 @@ class OrderAdmin(admin.ModelAdmin):
         'delivery_method',
         'status'
         )
-    
+
     list_filter = ('delivery_method', 'status')
     search_fields = ('cart__owner__email',)

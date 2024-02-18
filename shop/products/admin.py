@@ -1,6 +1,4 @@
-from typing import Any
 from django.contrib import admin
-from django.http import HttpRequest
 
 from products.models import Product
 
@@ -15,7 +13,7 @@ class ProductAdmin(admin.ModelAdmin):
         'count',
         'category'
         )
-    
+
     list_filter = ('owner', 'category')
     readonly_fields = ('owner',)
     search_fields = ('name',)
