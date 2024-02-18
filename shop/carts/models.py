@@ -11,7 +11,7 @@ class Cart(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return ' | '.join(('Cart', str(self.owner), str(self.count), str(self.is_active)))
+        return ' | '.join((str(self.owner), str(self.count), str(self.is_active)))
 
 
 class CartItem(models.Model):

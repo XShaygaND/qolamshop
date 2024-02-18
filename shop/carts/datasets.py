@@ -7,7 +7,7 @@ delivery_methods = [
 order_statuses = {
     ('CRT', 'Created'),
     ('CFD', 'Confirmed'),
-    ('SNT', 'Sent to receiver'),
+    ('SNT', 'Sent'),
     ('FIN', 'Delivered'),
     ('CNC', 'Canceled'),
     ('REF', 'Refunded'),
