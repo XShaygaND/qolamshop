@@ -6,6 +6,7 @@ from associates.datasets import locations
 
 User = get_user_model()
 
+
 class Associate(models.Model):
     """A simple model representing the associates of the shop"""
 
@@ -21,7 +22,7 @@ class Associate(models.Model):
     slug = models.SlugField(blank=False)
 
     def get_absolute_url(self):
-        return reverse('associate', kwargs={'slug': self.slug})
-    
+        return reverse('associates:details', kwargs={'slug': self.slug})
+
     def __str__(self):
         return self.name

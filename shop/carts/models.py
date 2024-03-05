@@ -1,8 +1,10 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 
-from users.models import User
 from products.models import Product
 from carts.datasets import delivery_methods, order_statuses
+
+User = get_user_model()
 
 
 class Cart(models.Model):
@@ -20,16 +22,31 @@ class CartItem(models.Model):
     quantity = models.IntegerField(default=1)
 
     def __str__(self):
-        return ' | '.join((str(self.cart.owner), str(self.product.name), str(self.quantity)))
-    
+        return ' | '.join(
+            (
+                str(self.cart.owner),
+                str(self.product.name),
+                str(self.quantity)
+            )
+        )
+
 
 class Order(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     address = models.TextField(max_length=199, blank=True)
     phone = models.CharField(max_length=15, blank=True)
     postal_code = models.CharField(max_length=20, blank=True)
-    delivery_method = models.CharField(max_length=99, choices=delivery_methods, default="ND")
-    status = models.CharField(max_length=99, choices=order_statuses, default='CRT')
+    delivery_method = models.CharField(
+        max_length=99, choices=delivery_methods, default="ND")
+    status = models.CharField(
+        max_length=99, choices=order_statuses, default='CRT')
 
     def __str__(self):
-        return ' | '.join(('Order', str(self.cart.owner), str(self.cart.count), str(self.status)))
+        return ' | '.join(
+            (
+                'Order',
+                str(self.cart.owner),
+                str(self.cart.count),
+                str(self.status)
+            )
+        )

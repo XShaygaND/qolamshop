@@ -1,11 +1,14 @@
-from django.views.generic import DetailView
+from django.views.generic import DetailView, UpdateView
+from django.shortcuts import redirect
+from django.urls import reverse
 
 from associates.models import Associate
+from associates.forms import AssociateUpdateForm
 from products.models import Product
 
 
 class AssociateDetailView(DetailView):
-    """Basic ListView for the Associate model"""
+    """DetailView for viewing the information about an associate"""
     
     model = Associate
     template_name = 'associates/details.html'
@@ -18,3 +21,32 @@ class AssociateDetailView(DetailView):
         data['product_list'] = products
 
         return data
+
+
+class AssociateUpdateView(UpdateView):
+    """UpdateView for associates to update their information"""
+
+    model = Associate
+    template_name = 'associates/update.html'
+    form_class = AssociateUpdateForm
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_anonymous:
+            """Redirects user to the index page if they are not logged in or not the original associate"""
+
+            return redirect(reverse('associates:details', args=args, kwargs=kwargs))
+        
+        elif self.get_object().owner != request.user:
+            return redirect(reverse('associates:details', args=args, kwargs=kwargs))
+            
+        else:
+            return super(AssociateUpdateView, self).dispatch(request, *args, **kwargs)
+
+
+# class AssociateStatsDetailView(DetailView):
+#     """A view for viewing the stats of an associate"""
+
+# TODO: Create a view for viewing the stats of an associate
+        
+#     model = Associate
+#     template_name = ''
