@@ -1,0 +1,24 @@
+{% extends 'products/base.html' %}
+
+{% block title %}
+    Create Product
+{% endblock title %}
+
+
+{% block content %}
+
+<br>
+<h1>New Product</h1>
+<hr>
+<div class="form-group">
+<form method="POST", enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-primary">Post</button>
+    <a href="{% url 'products:index' %}" class="btn btn-secondary">Cancel</a>
+</form>
+</div>
+<br>
+<br>
+    
+{% endblock content %}

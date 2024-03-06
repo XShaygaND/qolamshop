@@ -31,7 +31,7 @@ class AssociateUpdateView(UpdateView):
     form_class = AssociateUpdateForm
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_anonymous:
+        if not request.user.is_authenticated:
             """Redirects user to the index page if they are not logged in or not the original associate"""
 
             return redirect(reverse('associates:details', args=args, kwargs=kwargs))
@@ -41,6 +41,13 @@ class AssociateUpdateView(UpdateView):
             
         else:
             return super(AssociateUpdateView, self).dispatch(request, *args, **kwargs)
+        
+
+def get_profile_or_associate(request):
+    if request.user.is_associate:
+        return redirect('associates:details', Associate.objects.get(owner=request.user).slug)
+    
+    return redirect('products:index') # TODO: Create profile page
 
 
 # class AssociateStatsDetailView(DetailView):

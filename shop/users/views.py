@@ -28,7 +28,7 @@ class UserLoginView(LoginView):
     
     form_class = UserLoginForm
     template_name = "auth/login.html"
-    success_url = reverse_lazy('index')
+    success_url = reverse_lazy('products:index')
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_anonymous:

@@ -1,5 +1,6 @@
 import tempfile
-from django.test import TestCase
+from django.test import TestCase, Client
+from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from products.models import Product
@@ -39,3 +40,21 @@ class TestAssociateModel(TestCase):
         self.assertEqual(associate.website, 'test.com')
         self.assertEqual(associate.location, 'France')
         self.assertEqual(associate.slug, 'test-slug')
+
+    def test_profile_or_associate_view(self):
+        """Tests the view for redirecting the user to the profile or the assocaite page"""
+
+        client = Client()
+        non_ass_user = User.objects.create(email='user2@test.com', password='T@st123')
+        client.force_login(non_ass_user)
+        response = client.post(reverse('associates:get_profile'), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        # self.assertEqual(response.redirect_chain[0], ('users:profile', 302))
+        self.assertEqual(response.redirect_chain[0], ('/', 302)) # Temp
+        
+        client.force_login(self.user)
+        response = client.post(reverse('associates:get_profile'), follow=True)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[0], ('/associate/test-slug', 302))

@@ -73,7 +73,7 @@
                   </svg>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" data-bs-theme="light">
-                  <li><a class="dropdown-item" href="#">Profile</a></li>
+                  <li><a class="dropdown-item" href="{% url "associates:get_profile" %}">Profile</a></li>
                   <li><a class="dropdown-item" href="{% url "carts:orders" %}">Orders</a></li>
                   <li><hr class="dropdown-divider"></li>
                   <li><a class="dropdown-item text-danger" href="{% url 'users:logout' %}?next={{ request.path }}">Logout</a></li>

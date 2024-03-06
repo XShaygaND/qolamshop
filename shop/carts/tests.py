@@ -1,7 +1,6 @@
 import tempfile
 from django.test import TestCase, Client
 from django.urls import reverse
-from django.contrib.auth.models import AnonymousUser
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from carts.models import Cart, CartItem, Order
