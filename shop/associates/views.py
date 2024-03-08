@@ -47,7 +47,7 @@ def get_profile_or_associate(request):
     if request.user.is_associate:
         return redirect('associates:details', Associate.objects.get(owner=request.user).slug)
     
-    return redirect('products:index') # TODO: Create profile page
+    return redirect('users:profile') # TODO: Create profile page
 
 
 # class AssociateStatsDetailView(DetailView):

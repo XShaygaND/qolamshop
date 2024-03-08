@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save 
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from carts.models import Cart, CartItem, Order
@@ -29,6 +29,7 @@ def update_order_cart(sender, instance, created, **kwargs):
         
         cart.is_active = False
         user.cart_count = 0
+        user.purchases += 1
         instance.status = 'CFD'
 
         cart.save()

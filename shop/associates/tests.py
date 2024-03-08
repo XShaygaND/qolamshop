@@ -50,8 +50,7 @@ class TestAssociateModel(TestCase):
         response = client.post(reverse('associates:get_profile'), follow=True)
 
         self.assertEqual(response.status_code, 200)
-        # self.assertEqual(response.redirect_chain[0], ('users:profile', 302))
-        self.assertEqual(response.redirect_chain[0], ('/', 302)) # Temp
+        self.assertEqual(response.redirect_chain[0], ('/profile/', 302))
         
         client.force_login(self.user)
         response = client.post(reverse('associates:get_profile'), follow=True)

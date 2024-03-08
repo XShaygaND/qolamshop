@@ -1,0 +1,13 @@
+{% extends 'products/base.html' %}
+
+{% load static %}
+
+{% block title %}
+  Profile
+{% endblock %}
+
+{% block content %}
+  <div>
+    <h3>Purchases: {{ user.purchases }}</h3>
+  </div>
+{% endblock %}
