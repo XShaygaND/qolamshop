@@ -1,3 +1,6 @@
+from typing import Any
+from django.http import HttpRequest
+from django.http.response import HttpResponse as HttpResponse
 from django.views.generic import CreateView, ListView, DetailView
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -76,6 +79,13 @@ class ProductSearchView(ListView):
 
     model = Product
     template_name = 'products/search.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.GET.get('q'):
+            return redirect('products:index')
+        
+        else:
+            return super(ProductSearchView, self).dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         query = self.request.GET.get('q')
