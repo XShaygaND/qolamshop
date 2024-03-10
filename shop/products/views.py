@@ -69,3 +69,14 @@ class ProductCategoryListView(ListView):
         category = self.kwargs['category']
         queryset = queryset.filter(category=category)
         return queryset
+    
+
+class ProductSearchView(ListView):
+    """Basic ListView for searching for a Product"""
+
+    model = Product
+    template_name = 'products/search.html'
+
+    def get_queryset(self):
+        query = self.request.GET.get('q')
+        return Product.objects.filter(name__icontains=query)

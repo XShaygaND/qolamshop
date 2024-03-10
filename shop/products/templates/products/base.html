@@ -52,10 +52,10 @@
                   <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
                 </svg>
               </a>
-              <form class="dropdown-menu p-2" data-bs-theme="light" style="min-width: 20rem;">
+              <form class="dropdown-menu p-2" action="{% url "products:search" %}?q={{ request.GET.q }}" method="get" data-bs-theme="light" style="min-width: 20rem;">
                 <div class="input-group">
-                  <input type="text" class="form-control" placeholder="Search" aria-label="Example text with button addon" aria-describedby="button-addon1" />
-                  <button class="btn btn-success" type="button">Go</button>
+                  <input name="q" type="text" class="form-control" placeholder="Search" />
+                  <button class="btn btn-success" type="submit">Go</button>
                 </div>
               </form>
             </li>

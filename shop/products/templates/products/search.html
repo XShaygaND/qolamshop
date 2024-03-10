@@ -1,0 +1,28 @@
+{% extends 'products/base.html' %}
+
+{% load static %}
+
+{% block title %}
+  Search
+{% endblock %}
+
+{% block content %}
+  {% if product_list %}
+    <div class="row row-cols-1 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 justify-content-center">
+      {% for product in product_list %}
+        <a href="{% url 'products:details' product.pk %}" class="col mb-2 text-dark text-decoration-none" style="width: 300px;">
+          <div class="shadow">
+            <img class="img-fluid" style="width: 300px; height: 300px; object-fit: cover" src="{{ product.logo.url }}" alt="Product Image" />
+            <div class="ms-2">
+              <h5>{{ product.name }}</h5>
+              <p>${{ product.price }}</p>
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <br />
+    <h3>No products matching your search!</h3>
+  {% endif %}
+{% endblock %}
