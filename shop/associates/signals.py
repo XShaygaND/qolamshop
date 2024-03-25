@@ -6,7 +6,7 @@ from associates.models import Associate
 
 
 @receiver(post_save, sender=Associate)
-def update_user_card_count(sender, instance, created, **kwargs):
+def handle_associate_token_creation(sender, instance, created, **kwargs):
     """Signal which handles token creation for the associate"""
 
     if created:
@@ -35,7 +35,7 @@ def update_user_card_count(sender, instance, created, **kwargs):
 
 
 @receiver(post_delete, sender=Associate)
-def update_user_card_count(sender, instance, created, **kwargs):
+def delete_associate_token(sender, instance, **kwargs):
     """Signal which handles token deletion for the associate"""
 
     try:

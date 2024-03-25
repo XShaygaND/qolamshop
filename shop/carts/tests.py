@@ -45,9 +45,9 @@ class TestCartModel(TestCase):
     def tearDown(self):
         """Deletes the models used for testing"""
 
-        self.user.delete()
-        self.associate.delete()
         self.product.delete()
+        self.associate.delete()
+        self.user.delete()
 
     def test_cart_fields(self):
         """Tests default fields of the Cart model"""
@@ -94,9 +94,9 @@ class TestCartItemModel(TestCase):
     def tearDown(self):
         """Deletes the models used for testing"""
 
-        self.user.delete()
-        self.associate.delete()
         self.product.delete()
+        self.associate.delete()
+        self.user.delete()
 
     def test_cart_item_fields(self):
         """Tests default fields of the CartItem model"""
@@ -258,11 +258,11 @@ class TestOrderModel(TestCase):
         )
 
     def tearDown(self):
-        """Deletes the objects used for testing""" 
+        """Deletes the models used for testing""" 
 
-        self.user.delete()
-        self.associate.delete()
         self.product.delete()
+        self.associate.delete()
+        self.user.delete()
 
     def test_order_fields(self):
         """Tests default fields of the `Order` model"""
