@@ -6,7 +6,7 @@ from carts.models import Cart, CartItem, Order
 
 @receiver(post_save, sender=CartItem)
 def update_user_card_count(sender, instance, created, **kwargs):
-    """A signal that updates the `carts.models.Cart.count` and `users.models.User.cart_count` post_save"""
+    """Signal which updates the `carts.models.Cart.count` and `users.models.User.cart_count` post_save"""
     
     if created:
         cart = instance.cart
@@ -21,7 +21,7 @@ def update_user_card_count(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Order)
 def update_order_cart(sender, instance, created, **kwargs):
-    """A signal which updates the cart and the order to prepare it for sending"""
+    """Signal which updates the cart and the order to prepare it for sending"""
 
     if created:
         cart = instance.cart

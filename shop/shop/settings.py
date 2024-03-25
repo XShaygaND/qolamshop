@@ -82,7 +82,11 @@ WSGI_APPLICATION = 'shop.wsgi.application'
 
 # Authentication
 
-AUTH_USER_MODEL = "users.User"
+AUTH_USER_MODEL = 'users.User'
+
+LOGIN_URL = '/login/'
+
+LOGIN_REDIRECT_URL = '/'
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
