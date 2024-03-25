@@ -204,8 +204,6 @@ class TestCartItemModel(TestCase):
 
         cartitem.delete()
 
-        #TODO: Check multiple products
-
     def test_remove_from_cart_view(self):
         client = Client()
         client.force_login(self.user)
@@ -227,8 +225,6 @@ class TestCartItemModel(TestCase):
 
         cartitem.delete()
 
-        #TODO: Check multiple products
-    
 
 class TestOrderModel(TestCase):
     """Test class for testing carts.models.Order"""
@@ -422,5 +418,3 @@ class TestOrderModel(TestCase):
 
         self.assertEqual(response.redirect_chain[0], ('/login/', 302))
         self.assertEqual(response.status_code, 200)
-
-    #TODO: Test redirect if the object doesnt exist

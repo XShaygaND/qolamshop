@@ -212,5 +212,5 @@ class OrderDetailView(DetailView):
         elif self.get_object().cart.owner != request.user:
             return redirect('carts:orders')
         
-        else: #TODO: Redirect if object doesnt exist
+        else:
             return super(OrderDetailView, self).dispatch(request, *args, **kwargs)

@@ -44,6 +44,9 @@ INSTALLED_APPS = [
     'products',
     'users',
     'carts',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -85,6 +88,15 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'users.backends.EmailAuthBackend'
 ]
+
+
+# Rest Framework
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
 
 
 
