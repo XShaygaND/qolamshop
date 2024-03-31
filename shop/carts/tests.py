@@ -15,7 +15,8 @@ class TestCartModel(TestCase):
     def setUp(self):
         """Sets up cart for testing"""
 
-        self.user = User.objects.create(email='user@test.com', password='T@st123', is_associate=True)
+        self.user = User.objects.create(email='user@test.com', password='T@st123')
+        self.auser = User.objects.create(email='auser@test.com', password='T@st123', is_associate=True)
         
         with tempfile.NamedTemporaryFile() as f:
             f.write(b'Test image.')
@@ -25,7 +26,7 @@ class TestCartModel(TestCase):
         self.associate = Associate.objects.create(
             name='Testing co.',
             description='Testing Co\Testing\nDescription',
-            owner = self.user,
+            owner = self.auser,
             logo = test_image,
             website = 'test.com',
             location='France',
@@ -64,7 +65,8 @@ class TestCartItemModel(TestCase):
     def setUp(self):
         """Sets up cart items for testing"""
 
-        self.user = User.objects.create(email='user@test.com', password='T@st123', is_associate=True)
+        self.user = User.objects.create(email='user@test.com', password='T@st123', is_associate=False)
+        self.auser = User.objects.create(email='auser@test.com', password='T@st123', is_associate=True)
         
         with tempfile.NamedTemporaryFile() as f:
             f.write(b'Test image.')
@@ -74,7 +76,7 @@ class TestCartItemModel(TestCase):
         self.associate = Associate.objects.create(
             name='Testing co.',
             description='Testing Co\Testing\nDescription',
-            owner = self.user,
+            owner = self.auser,
             logo = test_image,
             website = 'test.com',
             location='France',
@@ -116,18 +118,28 @@ class TestCartItemModel(TestCase):
         """Tests requests from an authenticated user to the `AddToCartView`"""
         
         client = Client()
-        user = User.objects.get(email='user@test.com')
-        client.force_login(user)
-        response = client.post(reverse('carts:add_to_cart', args={1}), follow=True)
+        client.force_login(self.user)
+        response = client.post(reverse('carts:add_to_cart', args={self.product.pk}), follow=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.redirect_chain[0], ('/cart/', 302))
+        
+    def test_associate_add_to_cart_view(self):
+        """Tests requests from an authenticated user to the `AddToCartView`"""
+        
+        client = Client()
+        client.force_login(self.auser)
+        response = client.post(reverse('carts:add_to_cart', args={self.product.pk}), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[0], ('/associate/get_profile', 302))
+        self.assertEqual(response.redirect_chain[1], ('/associate/test-slug', 302))
 
     def test_annonymous_add_to_cart_view(self):
         """Tests requests from an annonymous user to the `AddToCartView`"""
 
         client = Client()
-        response = client.post(reverse('carts:add_to_cart', args={1}), follow=True)
+        response = client.post(reverse('carts:add_to_cart', args={self.product.pk}), follow=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.redirect_chain[0], ('/login/', 302))
@@ -137,7 +149,7 @@ class TestCartItemModel(TestCase):
 
         client = Client()
         client.force_login(self.user)
-        response = client.get(reverse('carts:add_to_cart', args={1}), follow=True)
+        response = client.get(reverse('carts:add_to_cart', args={self.product.pk}), follow=True)
         
         cart = Cart.objects.get(owner=self.user)
 
@@ -150,20 +162,31 @@ class TestCartItemModel(TestCase):
         """Tests requests from an authenticated user to the `RemoveFromCartView`"""
         
         client = Client()
-        user = User.objects.get(email='user@test.com')
-        client.force_login(user)
-        client.post(reverse('carts:add_to_cart', args={1}), follow=True)
-        response = client.post(reverse('carts:remove_from_cart', args={1}), follow=True)
+        client.force_login(self.user)
+        client.post(reverse('carts:add_to_cart', args={self.product.pk}), follow=True)
+        response = client.post(reverse('carts:remove_from_cart', args={self.product.pk}), follow=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.redirect_chain[0], ('/cart/', 302))
+
+    def test_associate_remove_from_cart_view(self):
+        """Tests requests from an authenticated user to the `RemoveFromCartView`"""
+        
+        client = Client()
+        client.force_login(self.auser)
+        client.post(reverse('carts:add_to_cart', args={self.product.pk}), follow=True)
+        response = client.post(reverse('carts:remove_from_cart', args={self.product.pk}), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[0], ('/associate/get_profile', 302))
+        self.assertEqual(response.redirect_chain[1], ('/associate/test-slug', 302))
 
     def test_annonymous_remove_from_cart_view(self):
         """Tests requests from an annonymous user to the `AddToCartView`"""
 
         client = Client()
-        client.post(reverse('carts:add_to_cart', args={1}), follow=True)
-        response = client.post(reverse('carts:remove_from_cart', args={1}), follow=True)
+        client.post(reverse('carts:add_to_cart', args={self.product.pk}), follow=True)
+        response = client.post(reverse('carts:remove_from_cart', args={self.product.pk}), follow=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.redirect_chain[0], ('/login/', 302))
@@ -173,8 +196,8 @@ class TestCartItemModel(TestCase):
 
         client = Client()
         client.force_login(self.user)
-        client.post(reverse('carts:add_to_cart', args={1}), follow=True)
-        response = client.get(reverse('carts:remove_from_cart', args={1}), follow=True)
+        client.post(reverse('carts:add_to_cart', args={self.product.pk}), follow=True)
+        response = client.get(reverse('carts:remove_from_cart', args={self.product.pk}), follow=True)
         
 
         self.assertEqual(response.status_code, 200)
@@ -188,14 +211,14 @@ class TestCartItemModel(TestCase):
 
         self.assertFalse(CartItem.objects.filter(cart=cart).exists())
 
-        client.post(reverse('carts:add_to_cart', args={1}))
+        client.post(reverse('carts:add_to_cart', args={self.product.pk}))
         cartitem = CartItem.objects.filter(cart=cart)
 
         self.assertTrue(cartitem.exists())
         self.assertEqual(cartitem[0].product, self.product)
         self.assertEqual(cartitem[0].quantity, 1)
 
-        client.post(reverse('carts:add_to_cart', args={1}))
+        client.post(reverse('carts:add_to_cart', args={self.product.pk}))
         cartitem = CartItem.objects.filter(cart=cart)
 
         self.assertTrue(cartitem.exists())
@@ -212,13 +235,13 @@ class TestCartItemModel(TestCase):
 
         CartItem.objects.create(cart=cart, product=self.product, quantity=2)
 
-        client.post(reverse('carts:remove_from_cart', args=[1,]))
+        client.post(reverse('carts:remove_from_cart', args=[self.product.pk,]))
         cartitem = CartItem.objects.get(cart=cart)
 
         self.assertEqual(cartitem.product, self.product)
         self.assertEqual(cartitem.quantity, 1)
 
-        client.post(reverse('carts:remove_from_cart', args=[1,]))
+        client.post(reverse('carts:remove_from_cart', args=[self.product.pk,]))
         cartitem = CartItem.objects.filter(cart=cart)
 
         self.assertFalse(cartitem.exists())
@@ -230,7 +253,8 @@ class TestOrderModel(TestCase):
     """Test class for testing carts.models.Order"""
 
     def setUp(self):
-        self.user = User.objects.create(email='user@test.com', password='T@st123', is_associate=True)
+        self.user = User.objects.create(email='user@test.com', password='T@st123')
+        self.auser = User.objects.create(email='auser@test.com', password='T@st123', is_associate=True)
         
         with tempfile.NamedTemporaryFile() as f:
             f.write(b'Test image.')
@@ -240,7 +264,7 @@ class TestOrderModel(TestCase):
         self.associate = Associate.objects.create(
             name='Testing co.',
             description='Testing Co\Testing\nDescription',
-            owner = self.user,
+            owner = self.auser,
             logo = test_image,
             website = 'test.com',
             location='France',
@@ -281,13 +305,12 @@ class TestOrderModel(TestCase):
         """Tests the handling of the `Cart` model upon saving of the `Order` model"""
         
         cart = Cart.objects.get(owner=self.user)
-        user = User.objects.get(email='user@test.com')
         Order.objects.create(cart=cart)
         CartItem.objects.create(cart=cart, product=self.product, quantity=2)
 
         self.assertEqual(cart.is_active, False)
         self.assertEqual(cart.count, 2)
-        self.assertEqual(user.cart_count, 0)
+        self.assertEqual(self.user.cart_count, 0)
         self.assertEqual(Cart.objects.filter(owner=self.user, is_active=True).exists(), True)
         self.assertEqual(Cart.objects.filter(owner=self.user, is_active=True).count(), 1)
         self.assertEqual(Cart.objects.get(owner=self.user, is_active=True).count, 0)
@@ -307,22 +330,28 @@ class TestOrderModel(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(cart.count, 2)
         self.assertEqual(cart.is_active, True)
+
+    def test_associate_order_view(self):
+        """Tests a get request to the checkout view by a user"""
+        
+        client = Client()
+        client.force_login(self.auser)
+
+        response = client.get(reverse('carts:checkout'), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[0], ('/associate/get_profile', 302))
+        self.assertEqual(response.redirect_chain[1], ('/associate/test-slug', 302))
     
     def test_annonymous_order_view(self):
         """Tests a get request to the checkout view by an annonymous"""
 
         client = Client()
 
-        cart = Cart.objects.get(owner=self.user)
-
-        CartItem.objects.create(cart=cart, product=self.product, quantity=2)
-
         response = client.get(reverse('carts:checkout'), follow=True)
 
         self.assertEqual(response.redirect_chain[0], ('/login/', 302))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(cart.count, 2)
-        self.assertEqual(cart.is_active, True)
 
     def test_user_empty_cart_order_view(self):
         """Tests a get request to the checkout view by a user with an empty cart"""
@@ -345,27 +374,19 @@ class TestOrderModel(TestCase):
         client = Client()
         client.force_login(self.user)
 
-        cart = Cart.objects.get(owner=self.user)
-
-        CartItem.objects.create(cart=cart, product=self.product)
-
         response = client.get(reverse('carts:orders'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(cart.count, 1)
-        
-    def test_user_empty_cart_orders_list_view(self):
-        """Tests a get request to the orders view by a user with an empty cart"""
+
+    def test_associate_orders_list_view(self):
+        """Tests a get request to the orders view by a user"""
 
         client = Client()
-        client.force_login(self.user)
-
-        cart = Cart.objects.get(owner=self.user)
+        client.force_login(self.auser)
 
         response = client.get(reverse('carts:orders'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(cart.count, 0)
 
     def test_annonymous_orders_list_view(self):
         """Tests a get request to the orders view by an annonymous"""
@@ -390,6 +411,77 @@ class TestOrderModel(TestCase):
         response = client.get(reverse('carts:order_details', args=[order.pk]))
 
         self.assertEqual(response.status_code, 200)
+
+    def test_related_associate_order_details_view(self):
+        """Tests a get request to the order details view by a user"""
+
+        client = Client()
+        client.force_login(self.user)
+
+        cart = Cart.objects.get(owner=self.user)
+
+        self.assertFalse(CartItem.objects.filter(cart=cart).exists())
+
+        client.post(reverse('carts:add_to_cart', args={self.product.pk}))
+
+        client = Client()
+        client.force_login(self.auser)
+
+        order = Order.objects.create(cart=cart)
+
+        response = client.get(reverse('carts:order_details', args=[order.pk]))
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_unrelated_associate_order_details_view(self):
+        """Tests a get request to the order details view by a user"""
+
+        # Setup unrelated associate
+        _auser = User.objects.create(email='_auser@test.com', password='T@st123')
+
+        with tempfile.NamedTemporaryFile() as f:
+            f.write(b'Test image.')
+            f.flush()
+            test_image = SimpleUploadedFile('test_image.png', f.read())
+
+        _associate = Associate.objects.create(
+            name='Testing co.',
+            description='Testing Co\Testing\nDescription',
+            owner = _auser,
+            logo = test_image,
+            website = 'test.com',
+            location='France',
+            slug='test-slug',
+        )
+
+        _product = Product.objects.create(
+            name='TestProduct',
+            description='Test\nProduct\nDescription',
+            logo=test_image,
+            price='99.99',
+            category='food',
+            owner=_associate,
+            holding='San Francisco',
+        )
+
+        client = Client()
+        client.force_login(self.user)
+
+        cart = Cart.objects.get(owner=self.user)
+
+        self.assertFalse(CartItem.objects.filter(cart=cart).exists())
+
+        client.post(reverse('carts:add_to_cart', args={_product.pk}))
+
+        client = Client()
+        client.force_login(self.auser)
+
+        order = Order.objects.create(cart=cart)
+
+        response = client.get(reverse('carts:order_details', args=[order.pk]), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[0], ('/orders/', 302))
         
     def test_wrong_user_order_details_view(self):
         """Tests a get request to the order details view by a user unassociated with the order"""

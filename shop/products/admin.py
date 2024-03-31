@@ -15,7 +15,6 @@ class ProductAdmin(admin.ModelAdmin):
         )
 
     list_filter = ('owner', 'category')
-    readonly_fields = ('owner',)
     search_fields = ('name',)
 
     def get_exclude(self, request, obj = ...):
