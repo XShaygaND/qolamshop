@@ -13,7 +13,6 @@ User = get_user_model()
 
 
 @api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
 def api_root(request, format=None):
     """
     API root for listing the endpoints of the API
@@ -26,10 +25,9 @@ def api_root(request, format=None):
 
 @permission_classes([permissions.IsAuthenticated, cpermissions.IsAssociateOwnerOrReadOnly])
 class AssociateViewset(mixins.RetrieveModelMixin,
-                     mixins.UpdateModelMixin,
-                     mixins.DestroyModelMixin,
-                     mixins.ListModelMixin,
-                     viewsets.GenericViewSet):
+                       mixins.UpdateModelMixin,
+                       mixins.ListModelMixin,
+                       viewsets.GenericViewSet):
     """
     Viewset for the Associate model.
     Basically `ModelViewset` only excluding the create mixin

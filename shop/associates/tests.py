@@ -3,9 +3,10 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from products.models import Product
 from associates.models import Associate
-from users.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class TestAssociateModel(TestCase):
@@ -57,3 +58,5 @@ class TestAssociateModel(TestCase):
         
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.redirect_chain[0], ('/associate/test-slug', 302))
+
+    #TODO: Test signals
