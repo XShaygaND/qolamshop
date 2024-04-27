@@ -14,11 +14,12 @@ class Product(models.Model):
     count = models.PositiveIntegerField(default=0)
     pub_date = models.DateTimeField(auto_now_add=True)
     category = models.CharField(max_length=99, choices=categories)
-    owner = models.ForeignKey(Associate, on_delete=models.CASCADE)
+    owner = models.ForeignKey(
+        Associate, on_delete=models.CASCADE, related_name='products')
     holding = models.CharField(max_length=99, choices=holdings)
 
     def get_absolute_url(self):
         return reverse("products:details", kwargs={"pk": self.pk})
-    
+
     def __str__(self):
         return ' | '.join((str(self.owner), self.name, '$' + str(self.price)))

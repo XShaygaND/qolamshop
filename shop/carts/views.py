@@ -166,11 +166,14 @@ class OrderListView(ListView):
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
+        
+        if not self.request.user.is_associate:
+            carts = Cart.objects.filter(owner=self.request.user, is_active=False)
 
-        carts = Cart.objects.filter(owner=self.request.user, is_active=False)
-        if self.request.user.is_associate:
-            carts = list({cart for cart in Cart.objects.all() for cartitem in cart.cartitem_set.all(
-            ) if cartitem.product.owner.owner == self.request.user})
+        else:
+            carts = Cart.objects.filter(
+                cartitems__product__owner__owner=self.request.user
+            ).distinct()
 
         orders = [Order.objects.get(cart=cart) for cart in carts]
 
@@ -229,7 +232,7 @@ class OrderDetailView(DetailView):
         elif self.get_object().cart.owner != request.user and not request.user.is_associate:
             return redirect('carts:orders')
 
-        elif request.user.is_associate and not [item for item in self.get_object().cart.cartitem_set.all() if item.product.owner.owner == request.user]:
+        elif request.user.is_associate and not [item for item in self.get_object().cart.cartitems.all() if item.product.owner.owner == request.user]:
             return redirect('carts:orders')
 
         else:

@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase
 
 from associates.models import Associate
 from products.models import Product
+from carts.models import Cart, CartItem, Order
 
 User = get_user_model()
 
@@ -324,6 +325,11 @@ class TestProductViewset(APITestCase):
         response = self.client.post(reverse('api:product-list'))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+        response = self.client.put(
+            reverse('api:product-detail', args=[self.product.pk]),
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
         response = self.client.patch(
             reverse('api:product-detail', args=[self.product.pk]),
         )
@@ -360,6 +366,25 @@ class TestProductViewset(APITestCase):
             )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+        with open(image_url, "rb") as image_file:
+            data = {
+                "name": "Test Product",
+                "description": "This is a test product.",
+                "logo": image_file,
+                "price": 50.01,
+                "sales": 0,
+                "count": 99,
+                "category": "food",
+                "holding": "PEK"
+            }
+            response = self.client.put(
+                reverse('api:product-detail', args=[self.product.pk]),
+                data=data
+            )
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(Product.objects.get(
+                pk=self.product.pk).price, 50.01)
+
         response = self.client.get(reverse('api:product-list'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -392,6 +417,11 @@ class TestProductViewset(APITestCase):
             reverse('api:product-detail', args=[self.product.pk]))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        response = self.client.put(
+            reverse('api:product-detail', args=[self.product.pk]),
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
         response = self.client.patch(
             reverse('api:product-detail', args=[self.product.pk]),
         )
@@ -401,3 +431,473 @@ class TestProductViewset(APITestCase):
             reverse('api:product-detail', args=[self.product.pk]),
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class TestCartViewSet(APITestCase):
+    def setUp(self):
+        """Sets up models for testing"""
+
+        with tempfile.NamedTemporaryFile() as f:
+            f.write(b'Test image.')
+            self.test_image = SimpleUploadedFile('test_image.png', f.read())
+
+        self.user = User.objects.create(
+            email='user@test.com', password='T@st123', is_associate=True)
+
+        self.associate = Associate.objects.create(
+            name='Testing co.',
+            description='Testing Co\Testing\nDescription',
+            owner=self.user,
+            logo=self.test_image,
+            website='https://test.co.uk',
+            location='France',
+            slug='test-slug',
+        )
+
+        self.product = Product.objects.create(
+            name='TestProduct',
+            description='Test\nProduct\nDescription',
+            logo=self.test_image,
+            price='99.99',
+            category='food',
+            owner=self.associate,
+            holding='San Francisco',
+        )
+
+        self.cart = Cart.objects.get(owner=self.user)
+
+        self._user = User.objects.create(
+            email='2user@test.com', password='T@st123', is_associate=True)
+
+        self._associate = Associate.objects.create(
+            name='2Testing co.',
+            description='Testing Co\Testing\nDescription',
+            owner=self._user,
+            logo=self.test_image,
+            website='https://test2.co.uk',
+            location='France',
+            slug='test-slug2',
+        )
+
+    def tearDown(self):
+        """Deletes the models used for testing"""
+
+        self.associate.delete()
+        self.user.delete()
+
+    def test_cart_viewset_anno(self):
+        """Tests the CartViewset with an annonymous request"""
+
+        response = self.client.get(reverse('api:cart-list'))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.get(
+            reverse('api:cart-detail', args=[self.cart.pk]))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.post(reverse('api:cart-list'))
+        self.assertEqual(response.status_code,
+                         status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.put(
+            reverse('api:cart-detail', args=[self.cart.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.patch(
+            reverse('api:cart-detail', args=[self.cart.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.delete(
+            reverse('api:cart-detail', args=[self.cart.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_401_UNAUTHORIZED)
+
+    def test_cart_viewset_auth(self):
+        """Tests the CartViewset with an authenticated request"""
+
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + str(self.user.auth_token))
+
+        response = self.client.post(reverse('api:cart-list'))
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.get(reverse('api:cart-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse('api:cart-detail', args=[self.cart.pk]))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.put(
+            reverse('api:cart-detail', args=[self.cart.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.patch(
+            reverse('api:cart-detail', args=[self.cart.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.delete(
+            reverse('api:cart-detail', args=[self.cart.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_cart_viewset_unrel(self):
+        """Tests the CartViewset with an unrelated authenticated request"""
+
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + str(self._user.auth_token))
+
+        response = self.client.get(reverse('api:cart-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse('api:cart-detail', args=[self.cart.pk]))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        response = self.client.put(
+            reverse('api:cart-detail', args=[self.cart.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.patch(
+            reverse('api:cart-detail', args=[self.cart.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.delete(
+            reverse('api:cart-detail', args=[self.cart.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class TestCartItemViewSet(APITestCase):
+    def setUp(self):
+        """Sets up models for testing"""
+
+        with tempfile.NamedTemporaryFile() as f:
+            f.write(b'Test image.')
+            self.test_image = SimpleUploadedFile('test_image.png', f.read())
+
+        self.user = User.objects.create(
+            email='user@test.com', password='T@st123', is_associate=True)
+
+        self.associate = Associate.objects.create(
+            name='Testing co.',
+            description='Testing Co\Testing\nDescription',
+            owner=self.user,
+            logo=self.test_image,
+            website='https://test.co.uk',
+            location='France',
+            slug='test-slug',
+        )
+
+        self.product = Product.objects.create(
+            name='TestProduct',
+            description='Test\nProduct\nDescription',
+            logo=self.test_image,
+            price='99.99',
+            category='food',
+            owner=self.associate,
+            holding='San Francisco',
+        )
+
+        self.cart = Cart.objects.get(owner=self.user)
+        self.cartitem = CartItem.objects.create(
+            cart=self.cart,
+            product=self.product,
+            quantity=2
+        )
+
+        self._user = User.objects.create(
+            email='2user@test.com', password='T@st123', is_associate=True)
+
+        self._associate = Associate.objects.create(
+            name='2Testing co.',
+            description='Testing Co\Testing\nDescription',
+            owner=self._user,
+            logo=self.test_image,
+            website='https://test2.co.uk',
+            location='France',
+            slug='test-slug2',
+        )
+
+    def tearDown(self):
+        """Deletes the models used for testing"""
+
+        self.associate.delete()
+        self.user.delete()
+
+    def test_cartitem_viewset_anno(self):
+        """Tests the CartItemViewset with an annonymous request"""
+
+        response = self.client.get(reverse('api:cartitem-list'))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.get(
+            reverse('api:cartitem-detail', args=[self.cart.pk]))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.post(reverse('api:cartitem-list'))
+        self.assertEqual(response.status_code,
+                         status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.put(
+            reverse('api:cartitem-detail', args=[self.cartitem.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.patch(
+            reverse('api:cartitem-detail', args=[self.cartitem.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.delete(
+            reverse('api:cartitem-detail', args=[self.cartitem.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_401_UNAUTHORIZED)
+
+    def test_cartitem_viewset_auth(self):
+        """Tests the CartItemViewset with an authenticated request"""
+
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + str(self.user.auth_token))
+
+        response = self.client.post(reverse('api:cartitem-list'))
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.get(reverse('api:cartitem-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse('api:cartitem-detail', args=[self.cartitem.pk]))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.put(
+            reverse('api:cartitem-detail', args=[self.cartitem.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.patch(
+            reverse('api:cartitem-detail', args=[self.cartitem.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.delete(
+            reverse('api:cartitem-detail', args=[self.cartitem.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_cartitem_viewset_unrel(self):
+        """Tests the CartItemViewset with an unrelated authenticated request"""
+
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + str(self._user.auth_token))
+
+        response = self.client.get(reverse('api:cartitem-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse('api:cartitem-detail', args=[self.cartitem.pk]))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        response = self.client.put(
+            reverse('api:cartitem-detail', args=[self.cartitem.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.patch(
+            reverse('api:cartitem-detail', args=[self.cartitem.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.delete(
+            reverse('api:cartitem-detail', args=[self.cartitem.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class TestOrderViewSet(APITestCase):
+    def setUp(self):
+        """Sets up models for testing"""
+
+        with tempfile.NamedTemporaryFile() as f:
+            f.write(b'Test image.')
+            self.test_image = SimpleUploadedFile('test_image.png', f.read())
+
+        self.user = User.objects.create(
+            email='user@test.com', password='T@st123', is_associate=True)
+
+        self.associate = Associate.objects.create(
+            name='Testing co.',
+            description='Testing Co\Testing\nDescription',
+            owner=self.user,
+            logo=self.test_image,
+            website='https://test.co.uk',
+            location='France',
+            slug='test-slug',
+        )
+
+        self.product = Product.objects.create(
+            name='TestProduct',
+            description='Test\nProduct\nDescription',
+            logo=self.test_image,
+            price='99.99',
+            category='food',
+            owner=self.associate,
+            holding='San Francisco',
+        )
+
+        self.cart = Cart.objects.get(owner=self.user)
+        self.cartitem = CartItem.objects.create(
+            cart=self.cart,
+            product=self.product,
+            quantity=2
+        )
+
+        self.order = Order.objects.create(
+            cart=self.cart,
+            address='Test address, 2nd blvd.',
+            phone="9999999999",
+            postal_code='244'
+        )
+
+        self._user = User.objects.create(
+            email='2user@test.com', password='T@st123', is_associate=True)
+
+        self._associate = Associate.objects.create(
+            name='2Testing co.',
+            description='Testing Co\Testing\nDescription',
+            owner=self._user,
+            logo=self.test_image,
+            website='https://test2.co.uk',
+            location='France',
+            slug='test-slug2',
+        )
+
+    def tearDown(self):
+        """Deletes the models used for testing"""
+
+        self.associate.delete()
+        self.user.delete()
+
+    def test_order_viewset_anno(self):
+        """Tests the OrderViewset with an annonymous request"""
+
+        response = self.client.get(reverse('api:order-list'))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.get(
+            reverse('api:order-detail', args=[self.cart.pk]))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.post(reverse('api:order-list'))
+        self.assertEqual(response.status_code,
+                         status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.put(
+            reverse('api:order-detail', args=[self.order.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.patch(
+            reverse('api:order-detail', args=[self.order.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.delete(
+            reverse('api:order-detail', args=[self.order.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_401_UNAUTHORIZED)
+
+    def test_order_viewset_auth(self):
+        """Tests the OrderViewset with an authenticated request"""
+
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + str(self.user.auth_token))
+
+        response = self.client.post(reverse('api:order-list'))
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.get(reverse('api:order-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse('api:order-detail', args=[self.order.pk]))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.put(
+            reverse('api:order-detail', args=[self.order.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.patch(
+            reverse('api:order-detail', args=[self.order.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.delete(
+            reverse('api:order-detail', args=[self.order.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_order_viewset_unrel(self):
+        """Tests the OrderViewset with an unrelated authenticated request"""
+
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + str(self._user.auth_token))
+
+        response = self.client.get(reverse('api:order-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            reverse('api:order-detail', args=[self.order.pk]))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        response = self.client.put(
+            reverse('api:order-detail', args=[self.order.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.patch(
+            reverse('api:order-detail', args=[self.order.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.client.delete(
+            reverse('api:order-detail', args=[self.order.pk]),
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
